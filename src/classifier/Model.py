@@ -23,13 +23,15 @@ class InforWeightedCE(nn.Module):
         super(InforWeightedCE, self).__init__()
         self.weight = weight
         if self.weight is not None:
-            self.weight = Variable(self.weight).cuda()
+            #self.weight = Variable(self.weight).cuda()
+            self.weight = Variable(self.weight)
         self.infor_softmax_temp = infor_softmax_temp * 1.
         self.sm = nn.Softmax()
 
     def forward(self, input, target, infor, vocab=None):
         index_offset = torch.arange(0, target.size(0)).long() * input.size(1)
-        index_offset = Variable(index_offset.cuda())
+        #index_offset = Variable(index_offset.cuda())
+        index_offset = Variable(index_offset)
         scores = input.view(-1).index_select(0, target + index_offset)
         if self.weight is not None:
             mask_0 = self.weight[target.data]
@@ -62,7 +64,7 @@ class Model(nn.Module):
         assert bidir
         self.other_word_cost = args.other_word_cost
         self.num_directions = 2 if bidir else 1
-        self.nhid = args.nhid / 2 if bidir else args.nhid
+        self.nhid = args.nhid // 2 if bidir else args.nhid
         self.RNN_type = args.RNN_type
         self.softmax = nn.Softmax()
         self.use_cuda = args.cuda
@@ -124,7 +126,7 @@ class Model(nn.Module):
         option_emb = option_emb * option_mask.unsqueeze(2).expand_as(option_emb)
         option_emb = option_emb.sum(dim=0).squeeze()
         option_length = option_mask.sum(dim=0).squeeze()
-        option_emb = option_emb / option_length.unsqueeze(1).expand_as(option_emb)
+        option_emb = option_emb // option_length.unsqueeze(1).expand_as(option_emb)
         h_options = option_emb
         num_que = placeholder_idx.size(0) #the number of questions in this batch
         h_options = h_options.view(num_que, 4, -1)

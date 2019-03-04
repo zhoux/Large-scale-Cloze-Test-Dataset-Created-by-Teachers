@@ -32,7 +32,7 @@ def tokenize(st, sentence_split=None, option=False):
                 ans += [w]
     ans = " ".join(ans).lower()
     if option and ans.find(" ") != -1:
-        print ans
+        print(ans)
     return ans
 
 def tokenize_data(dir, data_set, difficulty_set):
@@ -53,7 +53,7 @@ def get_data(dir, data_set, difficulty_set, vocab=None):
     global total_data
     data = []
     total_data = 0
-    print data_set, difficulty_set
+    print(data_set, difficulty_set)
     for d in difficulty_set:
         new_path = os.path.join(dir, data_set, d)
         for inf in os.listdir(new_path):
@@ -124,8 +124,8 @@ if __name__ == "__main__":
     output_dir = "../../data/"
     min_freq = 2
     #set vocabulary
-    #vocab = makeVocabulary(get_sentences(tokenize_data(data_dir, "train", difficulty_set)), min_freq=min_freq)
-    #vocab.writeFile(os.path.join(output_dir, "dict.txt"))
+    vocab = makeVocabulary(get_sentences(tokenize_data(data_dir, "train", difficulty_set)), min_freq=min_freq)
+    vocab.writeFile(os.path.join(output_dir, "dict.txt"))
     dataset = torch.load('../../data/train.pt') #the tokenizer uses random functions, we fix the vocab here
     vocab = dataset["vocab"]
     unigram_dis = dataset["unigram_dis"]

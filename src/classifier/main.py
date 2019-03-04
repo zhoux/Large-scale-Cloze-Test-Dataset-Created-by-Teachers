@@ -74,16 +74,17 @@ if not args.test_only:
     args.save = exp_path + "model.pt"
     logger = Logger(exp_path + "log.txt")
     sys.stdout = logger
-print args
-args.cuda = args.gpu is not None
-if args.cuda:
-    torch.cuda.set_device(args.gpu)
+# print(args)
+# args.cuda = args.gpu is not None
+args.cuda = None
+# if args.cuda:
+#     torch.cuda.set_device(args.gpu)
 torch.manual_seed(args.seed)
-if torch.cuda.is_available():
-    if not args.cuda:
-        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
-    else:
-        torch.cuda.manual_seed(args.seed)
+# if torch.cuda.is_available():
+#     if not args.cuda:
+#         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+#     else:
+#         torch.cuda.manual_seed(args.seed)
 
 ###############################################################################
 # Load data
@@ -107,7 +108,7 @@ else:
 ###############################################################################
 
 model = Model.Model(args, ntokens, embeddings)
-print model
+print(model)
 
 if args.pre_trained:
     model.load_state_dict(torch.load(args.pre_trained))
@@ -149,7 +150,9 @@ def evaluate(data_source):
     total_correctness = []
     for i, (articles, options, answers, place_holder_pos, article_idx, predict_blank) in enumerate(data_source):
         output, _ = model(articles, options, place_holder_pos, article_idx)
-        total_loss += criterion(torch.max(output, Variable(torch.ones(output.size()).cuda()) * 1e-9).log(), answers, None).data * answers.size()[0]
+        #total_loss += criterion(torch.max(output, Variable(torch.ones(output.size()).cuda()) * 1e-9).log(), answers, None).data * answers.size()[0]
+        total_loss += criterion(torch.max(output, Variable(torch.ones(output.size())) * 1e-9).log(), answers,
+                                None).data * answers.size()[0]
         n_samples += answers.size()[0]
         _, max_indexes = torch.kthvalue(output.cpu(), 4)
         correctness = torch.eq(max_indexes, answers.cpu()).long().data
@@ -177,7 +180,8 @@ def train():
     for i, (articles, options, answers, place_holder_pos, article_idx, infor) in enumerate(train_data):
         model.zero_grad()
         output, aug_score = model(articles, options, place_holder_pos, article_idx)
-        loss = criterion(torch.max(output, Variable(torch.ones(output.size()).cuda()) * 1e-9).log(), answers, None)
+        #loss = criterion(torch.max(output, Variable(torch.ones(output.size()).cuda()) * 1e-9).log(), answers, None)
+        loss = criterion(torch.max(output, Variable(torch.ones(output.size())) * 1e-9).log(), answers, None)
         ori_loss += loss.data
         loss *= args.ori_cost
         if args.other_word_cost:
@@ -185,7 +189,8 @@ def train():
                 informativeness = infor[1:-1].t().contiguous()
             else:
                 informativeness = None
-            aug_loss = aug_criterion(torch.max(aug_score, Variable(torch.ones(aug_score.size()).cuda()) * 1e-9).log(), articles[1:-1].t().contiguous().view(-1), informativeness, vocab)
+            #aug_loss = aug_criterion(torch.max(aug_score, Variable(torch.ones(aug_score.size()).cuda()) * 1e-9).log(), articles[1:-1].t().contiguous().view(-1), informativeness, vocab)
+            aug_loss = aug_criterion(torch.max(aug_score, Variable(torch.ones(aug_score.size())) * 1e-9).log(), articles[1:-1].t().contiguous().view(-1), informativeness, vocab)
             loss += args.other_word_cost * aug_loss
         loss.backward()
         optim.step()
@@ -194,7 +199,7 @@ def train():
         total_samples += num_sample
         output = F.softmax(output)
         max_score, max_indexes = torch.kthvalue(output.cpu(), 4)
-        acc += torch.eq(max_indexes.cpu(), answers.cpu()).long().sum().data[0]
+        acc += torch.eq(max_indexes.cpu(), answers.cpu()).long().sum().item()
 
     cur_loss = total_loss[0] / total_samples
     cur_ori_loss = ori_loss[0] / total_samples
@@ -228,7 +233,7 @@ try:
         # Save the model if the validation loss is the best we've seen so far.
 
         if not best_val_acc or valid_acc > best_val_acc:
-            print "best valid"
+            print("best valid")
             with open(args.save, 'wb') as f:
                 torch.save(model.state_dict(), f)
             best_val_acc = valid_acc
@@ -239,8 +244,8 @@ except KeyboardInterrupt:
     print('Exiting from training early')
 
 # Load the best saved model.
-print "loading best model"
+print("loading best model")
 with open(args.save, 'rb') as f:
     model.load_state_dict(torch.load(f))
 test_all()
-print exp_path
+print(exp_path)

@@ -69,4 +69,5 @@ def gen_embeddings(vocab, ntokens, dim, in_file=None):
                      (pre_trained, pre_trained * 100.0 / ntokens))
         
     print('finish loading')
-    return torch.from_numpy(embeddings).float().cuda()
+    #return torch.from_numpy(embeddings).float().cuda()
+    return torch.from_numpy(embeddings).float()

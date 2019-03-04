@@ -43,7 +43,7 @@ class Dict(object):
 
     def getLabel(self, idx, default=None):
         try:
-            return self.idxToLabel[idx]
+            return self.idxToLabel[idx.item()]
         except KeyError:
             return default
 
@@ -94,7 +94,7 @@ class Dict(object):
         for f, i in zip(sort_freq, idx):
             if f < min_freq:
                 break
-            newDict.add(self.idxToLabel[i])
+            newDict.add(self.idxToLabel[i.item()])
 
         return newDict
 

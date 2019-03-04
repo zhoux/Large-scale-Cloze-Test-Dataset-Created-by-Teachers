@@ -21,6 +21,7 @@ class BucketIterator(object):
         self._reset()
 
     def _batchify(self, data, align_right=False):
+        data = [torch.LongTensor(x) for x in data]
         max_length = max(x.size(0) for x in data)
         out = data[0].new(len(data), max_length).fill_(Constants.PAD)
         for i in range(len(data)):
